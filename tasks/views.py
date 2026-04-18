@@ -48,5 +48,42 @@ def delete_task(request, pk):
     task = get_object_or_404(Task, pk = pk)
     task.delete()
     return Response({'message': 'Task is deleted successfully'})
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_task_status(request, pk):
+    task = get_object_or_404(Task, pk = pk)
+    new_status = request.data.get('status')
+
+    if not new_status:
+        return Response({"error": "Status is required"})
+
+    if new_status not in ['To Do', 'In Progress', 'Done']:
+        return Response({'error': "Invalid Status"})
+
+    task.status = new_status
+    task.save()
+
+    return Response({"message": "Task status updated successfully "})
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_task_priority(request, pk):
+    task = get_object_or_404(Task, pk = pk)
+    new_priority = request.data.get('priority')
+
+    if not new_priority:
+        return Response({"error": "Priority is required"})
+
+    if new_priority not in ['Low', 'Medium', 'High']:
+        return Response({"error": "Invalid Priority"})
+
+    task.priority = new_priority
+    task.save()
+    return Response({"message": "Task priority updated successfully"})
+
+
+    
+
  
 
