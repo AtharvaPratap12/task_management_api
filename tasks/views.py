@@ -6,10 +6,18 @@ from rest_framework import status
 from .serializers import TaskSerializer
 from .models import Task 
 from django.shortcuts import get_object_or_404
+from projects.models import ProjectMember, Project
 # Create your views here.
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_task(request):
+    project_id = request.data.get('project')
+
+    project = get_object_or_404(Project, id = project_id)
+
+    if not is_project_member(request.user, project):
+        return Response({"error": "Not Authorized"}, status = 403)
+
     serializer = TaskSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
@@ -26,6 +34,11 @@ def get_tasks(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_project_tasks(request, project_id):
+    project = get_object_or_404(Project, id = project_id)
+
+    if not is_project_member(request.user, project):
+        return Response({"error": "Not Authorized"}, status = 403)
+
     tasks = Task.objects.filter(pk = project_id)
     serializer = TaskSerializer(tasks, many = True)
     return Response(serializer.data)
@@ -34,6 +47,10 @@ def get_project_tasks(request, project_id):
 @permission_classes([IsAuthenticated])
 def update_task(request, pk):
     task = get_object_or_404(Task,pk = pk)
+    project = task.project
+
+    if not is_project_member(request.user, project):
+        return Response({"error": "Not Authorized"}, status = 403)
 
     serializer = TaskSerializer(task, data = request.data)
 
@@ -46,6 +63,11 @@ def update_task(request, pk):
 @permission_classes([IsAuthenticated])
 def delete_task(request, pk):
     task = get_object_or_404(Task, pk = pk)
+    project = task.project
+
+    if not is_project_member(request.user, project):
+        return Response({"error": "Not Authorized"}, status = 403)
+
     task.delete()
     return Response({'message': 'Task is deleted successfully'})
 
@@ -81,6 +103,12 @@ def update_task_priority(request, pk):
     task.priority = new_priority
     task.save()
     return Response({"message": "Task priority updated successfully"})
+
+def is_project_member(user, project):
+    return(
+        project.owner == user or
+        ProjectMember.objects.filter(project = project, user = user).exists()
+    )
 
 
     
