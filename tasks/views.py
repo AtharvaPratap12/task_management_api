@@ -123,6 +123,31 @@ def is_project_member(user, project):
         ProjectMember.objects.filter(project = project, user = user).exists()
     )
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def task_analytics(request):
+    user = request.user
+
+    total_tasks = Task.objects.filter(assigned_to = user).count()
+
+    completed_tasks = Task.objects.filter(assigned_to = user, status = "Done").count()
+    pending_tasks = Task.objects.filter(assigned_to = user).exclude(status = "Done").count()
+    high_priority_tasks = Task.objects.filter(assigned_to = user, priority = "High").count()
+
+    # Progreess Calculation
+    if total_tasks == 0:
+        progress = 0
+    else:
+        progress = (completed_tasks / total_tasks) * 100
+
+    return Response({
+        "total_tasks": total_tasks,
+        "completed_tasks": completed_tasks,
+        "pending_tasks": pending_tasks,
+        "high_priority_tasks": high_priority_tasks,
+        "progress_calculation": progress,
+    })
+
 
     
 
