@@ -28,6 +28,19 @@ def create_task(request):
 @permission_classes([IsAuthenticated])
 def get_tasks(request):
     tasks = Task.objects.filter(assigned_to = request.user)
+
+    search = request.GET.get('search')
+    if search:
+        tasks = tasks.filter(title__icontains = search)
+
+    status = request.GET.get('status')
+    if status:
+        tasks = tasks.filter(status = status)
+
+    priority = request.GET.get('priority')
+    if priority:
+        tasks = tasks.filter(priority = priority)
+    
     serializer = TaskSerializer(tasks, many = True)
     return Response(serializer.data)
 
